@@ -165,156 +165,156 @@ def createDict(processed_sentences):
     return d, cache
 
 
-#================================== ** Kneser-ney Smoothning ** ======================================== 
-def Kneser_Ney(prevSent,currWord,step,d,delta=0.75):
-    n= len(prevSent)+1
-    if currWord not in d[1].keys():
-        #val = d[1]['<UNK>']/sumOfUnigramValues
-        val = 1/len(d[1])
-        return val
+#================================== ** Kney ** ======================================== 
+# def Kneser_Ney(prevSent,currWord,step,d,delta=0.75):
+#     n= len(prevSent)+1
+#     if currWord not in d[1].keys():
+#         #val = d[1]['<UNK>']/sumOfUnigramValues
+#         val = 1/len(d[1])
+#         return val
     
-    #Empty history
-    if n==1:
-        # val = d[1]['<UNK>']/sumOfUnigramValues
-        # return val
-        val= d[1][currWord]/len(d[1])
-        return val
+#     #Empty history
+#     if n==1:
+#         # val = d[1]['<UNK>']/sumOfUnigramValues
+#         # return val
+#         val= d[1][currWord]/len(d[1])
+#         return val
     
-    first=0
-    if step==1:
-        try:
-            first = max(Count_Occurences(prevSent+currWord,d)-delta,0)/SumOfCounts(prevSent,d)
-        except ZeroDivisionError:
-            first = 0
-    else:
-        try:
-            first = max(Count_Occurences(currWord,d)-delta,0)/len(d[n])
-        except ZeroDivisionError:
-            first=0
-    alpha=0
-    try:
-        a, b = countPositives(prevSent,d)
-        if b==False:
-            alpha = (delta/SumOfCounts(prevSent,d))*a
-        else:
-            alpha = a
-    except ZeroDivisionError:
-        val = d[1]['<UNK>']/sumOfUnigramValues
-        return val
+#     first=0
+#     if step==1:
+#         try:
+#             first = max(Count_Occurences(prevSent+currWord,d)-delta,0)/SumOfCounts(prevSent,d)
+#         except ZeroDivisionError:
+#             first = 0
+#     else:
+#         try:
+#             first = max(Count_Occurences(currWord,d)-delta,0)/len(d[n])
+#         except ZeroDivisionError:
+#             first=0
+#     alpha=0
+#     try:
+#         a, b = countPositives(prevSent,d)
+#         if b==False:
+#             alpha = (delta/SumOfCounts(prevSent,d))*a
+#         else:
+#             alpha = a
+#     except ZeroDivisionError:
+#         val = d[1]['<UNK>']/sumOfUnigramValues
+#         return val
     
-    shortenedPrev = prevSent[1:]
-    second = alpha*Kneser_Ney(shortenedPrev,currWord,step+1,d)
-    if((first+second)== 0):
-        val= d[1]['<UNK>']/sumOfUnigramValues
-        return val
+#     shortenedPrev = prevSent[1:]
+#     second = alpha*Kneser_Ney(shortenedPrev,currWord,step+1,d)
+#     if((first+second)== 0):
+#         val= d[1]['<UNK>']/sumOfUnigramValues
+#         return val
     
-    return first+second
+#     return first+second
 
-#================================== ** Witten Bell Smoothning ** ======================================== 
-def Witten_Bell(prevSent,currWord,d):
-    n = len(prevSent)+1
-    if n==1:
-        if currWord in d[1]:
-            return Count_Occurences(currWord,d)/d[1]['<UNK>']
-        val = 1/len(d[1])
-        return val
-    alpha=0
-    try:
-        a,b = countPositives(prevSent,d)
-        if b==False:
-            alpha = a/(a+SumOfCounts(prevSent,d))
-        else:
-            alpha = a
-    except ZeroDivisionError:
-        return 1/len(d[n])
-    first = Count_Occurences(prevSent+currWord,d)/SumOfCounts(prevSent,d)
-    shortenedPrev = prevSent[1:]
-    ans = (1-alpha)*first + alpha*Witten_Bell(shortenedPrev,currWord,d)
-    if ans == 0:
-        val= d[1]['<UNK>']/sumOfUnigramValues
-        return val
-    return ans
-
-
-
-def perplexity_kneser_kneys(processedSentence):
-    delta = 0.75
-    avgPPLX=0
-    perplexityArr=[]
-    for sentence in processedSentence:
-        tokens = wordTokenize(sentence)
-        ngramSentence = ngrams(tokens,4)
-        prob=1
-        arr=[]
-        for i in ngramSentence:
-            prev = tuple(i[:-1])
-            curr = tuple([i[-1]])
-            val = Kneser_Ney(prev,curr,1,d,delta)
-            #print(curr,prev, val)
-            #arr.append((val)**(1/(len(sentence)-4)))
-            prob*=val
-        # print("Probability: ",prob)
-        #pplx = 1/np.prod(arr)
-        pplx= perplexity(prob,len(tokens))
-        perplexityArr.append(pplx)
-        avgPPLX+=pplx
-        #print("Perplexity: ",pplx)
-    avgPPLX = avgPPLX/len(processedSentence)
-    return (avgPPLX, perplexityArr)
+#================================== ** WB ** ======================================== 
+# def Witten_Bell(prevSent,currWord,d):
+#     n = len(prevSent)+1
+#     if n==1:
+#         if currWord in d[1]:
+#             return Count_Occurences(currWord,d)/d[1]['<UNK>']
+#         val = 1/len(d[1])
+#         return val
+#     alpha=0
+#     try:
+#         a,b = countPositives(prevSent,d)
+#         if b==False:
+#             alpha = a/(a+SumOfCounts(prevSent,d))
+#         else:
+#             alpha = a
+#     except ZeroDivisionError:
+#         return 1/len(d[n])
+#     first = Count_Occurences(prevSent+currWord,d)/SumOfCounts(prevSent,d)
+#     shortenedPrev = prevSent[1:]
+#     ans = (1-alpha)*first + alpha*Witten_Bell(shortenedPrev,currWord,d)
+#     if ans == 0:
+#         val= d[1]['<UNK>']/sumOfUnigramValues
+#         return val
+#     return ans
 
 
-def perplexity_Witten_Bell(processedSentence):
-    avgPPLX=0
-    perplexityArr=[]
-    for sentence in processedSentence:
-        #print(sentence)
-        tokens = wordTokenize(sentence)
-        ngramSentence = ngrams(tokens,4)
-        prob=1
-        arr = []
-        for i in ngramSentence:
-            prev = tuple(i[:-1])
-            curr = tuple([i[-1]])
-            val = Witten_Bell(prev,curr,d)
-            arr.append((val)**(1/(len(tokens))))
-            #prob*=val
-        #print("Probability: ",prob)
-        pplx = 1/np.prod(arr)
-        perplexityArr.append(pplx)
-        #pplx= perplexity(prob,len(sentence)-4)
-        avgPPLX+=pplx
-        #print("Perplexity: ",pplx)
-    avgPPLX = avgPPLX/len(processedSentence)
-    return (avgPPLX,perplexityArr)
 
-def calculateProb_Witten_Bell(sentence):
-    avgPPLX=0
-    perplexityArr=[]
-    #print(sentence)
-    tokens = wordTokenize(sentence)
-    ngramSentence = ngrams(tokens,4)
-    prob=1
-    arr = []
-    for i in ngramSentence:
-        prev = tuple(i[:-1])
-        curr = tuple([i[-1]])
-        val = Witten_Bell(prev,curr,d)
-        prob*=val
-    return prob
+# def perplexity_kneser_kneys(processedSentence):
+#     delta = 0.75
+#     avgPPLX=0
+#     perplexityArr=[]
+#     for sentence in processedSentence:
+#         tokens = wordTokenize(sentence)
+#         ngramSentence = ngrams(tokens,4)
+#         prob=1
+#         arr=[]
+#         for i in ngramSentence:
+#             prev = tuple(i[:-1])
+#             curr = tuple([i[-1]])
+#             val = Kneser_Ney(prev,curr,1,d,delta)
+#             #print(curr,prev, val)
+#             #arr.append((val)**(1/(len(sentence)-4)))
+#             prob*=val
+#         # print("Probability: ",prob)
+#         #pplx = 1/np.prod(arr)
+#         pplx= perplexity(prob,len(tokens))
+#         perplexityArr.append(pplx)
+#         avgPPLX+=pplx
+#         #print("Perplexity: ",pplx)
+#     avgPPLX = avgPPLX/len(processedSentence)
+#     return (avgPPLX, perplexityArr)
 
-def calculateProb_Kneser_Kney(sentence):
-    avgPPLX=0
-    perplexityArr=[]
-    tokens = wordTokenize(sentence)
-    ngramSentence = ngrams(tokens,4)
-    prob=1
-    arr = []
-    for i in ngramSentence:
-        prev = tuple(i[:-1])
-        curr = tuple([i[-1]])
-        val = Kneser_Ney(prev,curr,1,d,0.75)
-        prob*=val
-    return prob
+
+# def perplexity_Witten_Bell(processedSentence):
+#     avgPPLX=0
+#     perplexityArr=[]
+#     for sentence in processedSentence:
+#         #print(sentence)
+#         tokens = wordTokenize(sentence)
+#         ngramSentence = ngrams(tokens,4)
+#         prob=1
+#         arr = []
+#         for i in ngramSentence:
+#             prev = tuple(i[:-1])
+#             curr = tuple([i[-1]])
+#             val = Witten_Bell(prev,curr,d)
+#             arr.append((val)**(1/(len(tokens))))
+#             #prob*=val
+#         #print("Probability: ",prob)
+#         pplx = 1/np.prod(arr)
+#         perplexityArr.append(pplx)
+#         #pplx= perplexity(prob,len(sentence)-4)
+#         avgPPLX+=pplx
+#         #print("Perplexity: ",pplx)
+#     avgPPLX = avgPPLX/len(processedSentence)
+#     return (avgPPLX,perplexityArr)
+
+# def calculateProb_Witten_Bell(sentence):
+#     avgPPLX=0
+#     perplexityArr=[]
+#     #print(sentence)
+#     tokens = wordTokenize(sentence)
+#     ngramSentence = ngrams(tokens,4)
+#     prob=1
+#     arr = []
+#     for i in ngramSentence:
+#         prev = tuple(i[:-1])
+#         curr = tuple([i[-1]])
+#         val = Witten_Bell(prev,curr,d)
+#         prob*=val
+#     return prob
+
+# def calculateProb_Kneser_Kney(sentence):
+#     avgPPLX=0
+#     perplexityArr=[]
+#     tokens = wordTokenize(sentence)
+#     ngramSentence = ngrams(tokens,4)
+#     prob=1
+#     arr = []
+#     for i in ngramSentence:
+#         prev = tuple(i[:-1])
+#         curr = tuple([i[-1]])
+#         val = Kneser_Ney(prev,curr,1,d,0.75)
+#         prob*=val
+#     return prob
 
 
 
